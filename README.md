@@ -14,6 +14,10 @@ Automatically monitors your USCIS case status by reading the JSON response from 
 3. When the status changes, you get an email with the new status and a link to your case.
 4. If the session expires, the tracker automatically logs back in using your credentials and a Gmail 2FA code.
 
+## Example notification
+
+![Status change email notification](screenshots/email-notification.png)
+
 ## Prerequisites
 
 - Python 3.9 or higher
