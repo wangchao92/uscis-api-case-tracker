@@ -11,7 +11,7 @@ Automatically monitors your USCIS case status and sends you an email notificatio
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.9 or higher
 - Google Chrome or Chromium browser
 - A Gmail account for receiving USCIS status notifications (can be the same account used for USCIS login)
 - A Gmail **App Password** for 2FA code retrieval (not your regular Gmail password)

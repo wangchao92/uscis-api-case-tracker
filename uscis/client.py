@@ -2,7 +2,7 @@
 
 import time
 import re
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 import requests
 
@@ -59,7 +59,7 @@ class USCISClient:
         self,
         case_number: str,
         return_raw: bool = False
-    ) -> tuple[Optional[CaseStatus], Optional[dict]] | Optional[CaseStatus]:
+    ) -> Union[Tuple[Optional[CaseStatus], Optional[dict]], Optional[CaseStatus]]:
         """Check case status using the authenticated API (requires login cookies).
 
         Args:
