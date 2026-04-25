@@ -16,7 +16,6 @@ import schedule
 from uscis.client import USCISClient
 from uscis.cookie_manager import CookieManager
 from uscis.auto_login import AutoLogin
-from uscis.parser import parse_similar_cases
 from storage.state import StateManager
 from notifications.email_notifier import EmailNotifier
 
@@ -109,8 +108,7 @@ class CaseTracker:
         )
 
     def _check_cases_for_account(self, account: dict, all_statuses: list,
-                                   changed_cases: list, json_diffs: dict,
-                                   similar_summaries: dict) -> bool:
+                                   changed_cases: list, json_diffs: dict) -> bool:
         """Check all cases for a single account. Returns True if any case failed."""
         uscis_client = account['client']
         login_failed = False
@@ -118,8 +116,6 @@ class CaseTracker:
         for case_config in account['cases']:
             case_number = case_config.get('case_number', '')
             case_type = case_config.get('case_type', '')
-            track_similar = case_config.get('track_similar', False)
-            similar_range = case_config.get('similar_range', 50)
 
             if not case_number:
                 continue
@@ -149,20 +145,6 @@ class CaseTracker:
                 if current:
                     current['case_type'] = case_type
                     all_statuses.append(current)
-
-                if track_similar:
-                    print(f"  Checking similar cases (±{similar_range})...")
-                    similar_cases = uscis_client.check_similar_cases(
-                        case_number, range_size=similar_range, delay_between_requests=0.5
-                    )
-                    if similar_cases:
-                        summary = parse_similar_cases(similar_cases)
-                        summary.base_case_number = case_number
-                        self.state_manager.save_similar_cases_summary(summary)
-                        similar_summaries[case_number] = summary
-                        print(f"  Similar cases: {summary.approved_count} approved, "
-                              f"{summary.pending_count} pending, {summary.denied_count} denied "
-                              f"({summary.approval_rate:.1f}% approval rate)")
             else:
                 print(f"  Failed to retrieve status")
                 login_failed = True
@@ -191,14 +173,13 @@ class CaseTracker:
         all_statuses = []
         changed_cases = []
         json_diffs = {}
-        similar_summaries = {}
         any_login_failed = False
 
         for account in self.accounts:
             if len(self.accounts) > 1:
                 print(f"\n--- Account: {account['name']} ---")
             failed = self._check_cases_for_account(
-                account, all_statuses, changed_cases, json_diffs, similar_summaries
+                account, all_statuses, changed_cases, json_diffs
             )
             if failed:
                 any_login_failed = True
@@ -225,7 +206,7 @@ class CaseTracker:
             if changed_cases or json_diffs:
                 print(f"\n{len(changed_cases)} status change(s), {len(json_diffs)} JSON change(s), sending notification...")
                 self.email_notifier.send_notification(
-                    all_statuses, changed_cases, similar_summaries, json_diffs
+                    all_statuses, changed_cases, json_diffs
                 )
             else:
                 print("\nNo changes detected.")
@@ -239,7 +220,6 @@ class CaseTracker:
             'changes_detected': len(changed_cases),
             'changed_cases': changed_cases,
             'json_diffs': json_diffs,
-            'similar_summaries': similar_summaries
         }
 
     def run_once(self):

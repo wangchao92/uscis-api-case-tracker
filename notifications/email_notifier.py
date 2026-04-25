@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 from typing import Optional
 
-from uscis.parser import CaseStatus, SimilarCasesSummary
+from uscis.parser import CaseStatus
 
 
 class EmailNotifier:
@@ -39,7 +39,6 @@ class EmailNotifier:
         self,
         cases: list[dict],
         changed_cases: list[str],
-        similar_summaries: dict[str, SimilarCasesSummary],
         json_diffs: dict[str, str] = None
     ) -> str:
         """Create HTML email content.
@@ -47,7 +46,6 @@ class EmailNotifier:
         Args:
             cases: List of case status dictionaries
             changed_cases: List of case numbers that have changed
-            similar_summaries: Dictionary mapping case numbers to similar cases summaries
             json_diffs: Dictionary mapping case numbers to diff strings
 
         Returns:
@@ -129,40 +127,6 @@ class EmailNotifier:
                 </details>
                 """
 
-            # Add similar cases summary if available
-            if case['case_number'] in similar_summaries:
-                summary = similar_summaries[case['case_number']]
-                if summary.total_checked > 0:
-                    html += f"""
-                    <div class="similar-summary">
-                        <h4>Similar Cases Analysis (±{summary.total_checked // 2} cases)</h4>
-                        <p>Total checked: {summary.total_checked}</p>
-                        <div class="progress-bar">
-                            <div class="progress-fill approved" style="width: {summary.approval_rate:.1f}%; float: left;">
-                                {summary.approved_count} approved
-                            </div>
-                            <div class="progress-fill pending" style="width: {(summary.pending_count / summary.total_checked * 100):.1f}%; float: left;">
-                                {summary.pending_count} pending
-                            </div>
-                            <div class="progress-fill denied" style="width: {(summary.denied_count / summary.total_checked * 100):.1f}%; float: left;">
-                                {summary.denied_count} denied
-                            </div>
-                        </div>
-                        <p><strong>Approval rate: {summary.approval_rate:.1f}%</strong></p>
-                        <details>
-                            <summary>Status breakdown</summary>
-                            <table>
-                                <tr><th>Status</th><th>Count</th></tr>
-                    """
-                    for status, count in sorted(summary.status_counts.items(), key=lambda x: -x[1]):
-                        html += f"<tr><td>{status}</td><td>{count}</td></tr>"
-
-                    html += """
-                            </table>
-                        </details>
-                    </div>
-                    """
-
             html += "</div>"
 
         html += """
@@ -201,7 +165,6 @@ class EmailNotifier:
         self,
         cases: list[dict],
         changed_cases: list[str],
-        similar_summaries: Optional[dict[str, SimilarCasesSummary]] = None,
         json_diffs: Optional[dict[str, str]] = None
     ) -> bool:
         """Send a status update notification email.
@@ -209,7 +172,6 @@ class EmailNotifier:
         Args:
             cases: List of case status dictionaries
             changed_cases: List of case numbers that have changed
-            similar_summaries: Optional dictionary mapping case numbers to summaries
             json_diffs: Optional dictionary mapping case numbers to diff strings
 
         Returns:
@@ -219,7 +181,6 @@ class EmailNotifier:
             print("Email configuration incomplete. Skipping notification.")
             return False
 
-        similar_summaries = similar_summaries or {}
         json_diffs = json_diffs or {}
 
         try:
@@ -240,7 +201,7 @@ class EmailNotifier:
             msg['To'] = self.recipient_email
 
             # Create HTML content
-            html_content = self._create_html_email(cases, changed_cases, similar_summaries, json_diffs)
+            html_content = self._create_html_email(cases, changed_cases, json_diffs)
             msg.attach(MIMEText(html_content, 'html'))
 
             # Send email

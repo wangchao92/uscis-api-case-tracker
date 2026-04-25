@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 from contextlib import contextmanager
 
-from uscis.parser import CaseStatus, SimilarCasesSummary
+from uscis.parser import CaseStatus
 
 
 class StateManager:
@@ -68,20 +68,6 @@ class StateManager:
                     received_date TEXT,
                     last_checked TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_changed TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-
-            # Similar cases summary table
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS similar_cases_summary (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    base_case_number TEXT NOT NULL,
-                    total_checked INTEGER,
-                    approved_count INTEGER,
-                    pending_count INTEGER,
-                    denied_count INTEGER,
-                    status_counts TEXT,  -- JSON string
-                    checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
 
@@ -220,30 +206,6 @@ class StateManager:
 
         return status_changed
 
-    def save_similar_cases_summary(self, summary: SimilarCasesSummary):
-        """Save a similar cases summary.
-
-        Args:
-            summary: SimilarCasesSummary object
-        """
-        import json
-
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO similar_cases_summary
-                (base_case_number, total_checked, approved_count,
-                 pending_count, denied_count, status_counts)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                summary.base_case_number,
-                summary.total_checked,
-                summary.approved_count,
-                summary.pending_count,
-                summary.denied_count,
-                json.dumps(summary.status_counts)
-            ))
-
     def get_case_history(
         self,
         case_number: str,
@@ -267,35 +229,6 @@ class StateManager:
                 LIMIT ?
             ''', (case_number, limit))
             return [dict(row) for row in cursor.fetchall()]
-
-    def get_latest_similar_summary(
-        self,
-        base_case_number: str
-    ) -> Optional[dict]:
-        """Get the latest similar cases summary for a case.
-
-        Args:
-            base_case_number: Base case number
-
-        Returns:
-            Dictionary with summary or None
-        """
-        import json
-
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT * FROM similar_cases_summary
-                WHERE base_case_number = ?
-                ORDER BY checked_at DESC
-                LIMIT 1
-            ''', (base_case_number,))
-            row = cursor.fetchone()
-            if row:
-                result = dict(row)
-                result['status_counts'] = json.loads(result['status_counts'])
-                return result
-            return None
 
     def get_all_current_statuses(self) -> list[dict]:
         """Get current status for all tracked cases.

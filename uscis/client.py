@@ -1,7 +1,5 @@
 """USCIS API client for checking case status."""
 
-import time
-import re
 from typing import Optional, Tuple, Union
 
 import requests
@@ -127,55 +125,3 @@ class USCISClient:
             result = self.check_case_public(case_number)
             return (result, None) if return_raw else result
 
-    def check_similar_cases(
-        self,
-        base_case_number: str,
-        range_size: int = 50,
-        delay_between_requests: float = 0.5
-    ) -> list[CaseStatus]:
-        """Check similar cases around a given case number.
-
-        Args:
-            base_case_number: Base case number to check around
-            range_size: Number of cases to check on each side (±range_size)
-            delay_between_requests: Delay in seconds between requests to avoid rate limiting
-
-        Returns:
-            List of CaseStatus objects for successfully checked cases
-        """
-        # Extract prefix and number from case number
-        # Format is typically: IOE0934045988 (3 letter prefix + numbers)
-        match = re.match(r'^([A-Z]+)(\d+)$', base_case_number.upper())
-        if not match:
-            print(f"Invalid case number format: {base_case_number}")
-            return []
-
-        prefix = match.group(1)
-        base_number = int(match.group(2))
-        number_length = len(match.group(2))
-
-        results = []
-
-        # Generate case numbers in range
-        start = max(0, base_number - range_size)
-        end = base_number + range_size + 1
-
-        print(f"Checking {end - start} similar cases around {base_case_number}...")
-
-        for num in range(start, end):
-            case_number = f"{prefix}{str(num).zfill(number_length)}"
-
-            # Skip the base case itself
-            if case_number == base_case_number.upper():
-                continue
-
-            status = self.check_case_public(case_number)
-            if status:
-                results.append(status)
-
-            # Respect rate limits
-            if delay_between_requests > 0:
-                time.sleep(delay_between_requests)
-
-        print(f"Successfully checked {len(results)} similar cases")
-        return results

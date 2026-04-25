@@ -1,6 +1,11 @@
-# USCIS Case Tracker
+# USCIS API Case Tracker
 
-Automatically monitors your USCIS case status and sends you an email notification whenever it changes. Supports multiple accounts simultaneously.
+Automatically monitors your USCIS case status by reading the JSON response from the official USCIS API, and sends you an email notification whenever the status changes. Supports multiple accounts simultaneously.
+
+**Tested on:**
+- ✅ Raspberry Pi (ARM64 / Debian)
+- ✅ macOS
+- ⚠️ Windows — should work in theory, but not tested. Reports welcome.
 
 ## How it works
 
@@ -15,6 +20,7 @@ Automatically monitors your USCIS case status and sends you an email notificatio
 - Google Chrome or Chromium browser
 - A Gmail account for receiving USCIS status notifications (can be the same account used for USCIS login)
 - A Gmail **App Password** for 2FA code retrieval (not your regular Gmail password)
+- **Your USCIS account's verification method must be set to "Email"** (not SMS) so the tracker can fetch 2FA codes automatically from Gmail. Change this at [myaccount.uscis.gov](https://myaccount.uscis.gov/) → Profile → Two-Step Verification → choose **Email**.
 
 > **Raspberry Pi / ARM Linux users:** also install chromedriver via apt — Selenium can't auto-download an ARM build:
 > ```bash
@@ -137,12 +143,12 @@ accounts:
 
 ## Platform notes
 
-| Platform | Browser command auto-detected |
-|---|---|
-| Raspberry Pi / Debian Linux | `chromium-browser` |
-| Ubuntu / Other Linux | `chromium`, `google-chrome` |
-| macOS | `/Applications/Google Chrome.app/...` or Chromium |
-| Windows | Standard Chrome install path |
+| Platform | Browser command auto-detected | Tested |
+|---|---|---|
+| Raspberry Pi / Debian Linux | `chromium-browser` | ✅ Yes |
+| Ubuntu / Other Linux | `chromium`, `google-chrome` | ⚠️ Should work |
+| macOS | `/Applications/Google Chrome.app/...` or Chromium | ✅ Yes |
+| Windows | Standard Chrome install path | ⚠️ Untested |
 
 ## Troubleshooting
 

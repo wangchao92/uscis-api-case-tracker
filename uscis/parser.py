@@ -20,23 +20,6 @@ class CaseStatus:
         return f"{self.case_number}: {self.status} - {self.title}"
 
 
-@dataclass
-class SimilarCasesSummary:
-    """Summary of similar cases analysis."""
-    base_case_number: str
-    total_checked: int
-    status_counts: dict  # status -> count
-    approved_count: int
-    pending_count: int
-    denied_count: int
-
-    @property
-    def approval_rate(self) -> float:
-        if self.total_checked == 0:
-            return 0.0
-        return (self.approved_count / self.total_checked) * 100
-
-
 def parse_case_status(response_data: dict, case_number: str) -> Optional[CaseStatus]:
     """Parse case status from public API response.
 
@@ -76,25 +59,6 @@ def parse_authenticated_case_status(response_data: dict, case_number: str) -> Op
     if not response_data:
         return None
 
-    # Event code to human-readable status mapping
-    EVENT_CODE_MAP = {
-        'IAF': 'Case Was Received',
-        'FTA0': 'Fingerprints Were Taken',
-        'FTA1': 'Fingerprints Were Taken',
-        'RFE': 'Request for Evidence Was Sent',
-        'RFEC': 'Response To RFE Was Received',
-        'INT': 'Interview Was Scheduled',
-        'INTC': 'Interview Was Completed',
-        'APR': 'Case Was Approved',
-        'DEN': 'Case Was Denied',
-        'CPR': 'Card Is Being Produced',
-        'CPM': 'Card Was Mailed',
-        'CPP': 'Card Was Picked Up',
-        'WDN': 'Case Was Withdrawn',
-        'TRN': 'Case Was Transferred',
-        'ADJ': 'Case Is Being Actively Reviewed',
-    }
-
     try:
         data = response_data.get('data', response_data)
 
@@ -104,13 +68,14 @@ def parse_authenticated_case_status(response_data: dict, case_number: str) -> Op
         updated_at = data.get('updatedAt', '')
         applicant_name = data.get('applicantName', '')
 
-        # Get status from most recent event
+        # Get most recent event. Report the raw event code — USCIS event-code
+        # meanings aren't publicly documented and have shifted over time, so
+        # we leave interpretation to the user (look up the code on the portal).
         events = data.get('events', [])
-        status = 'Case Received'
+        status = 'No events yet'
         latest_event_date = ''
 
         if events:
-            # Sort by timestamp to get the most recent
             sorted_events = sorted(
                 events,
                 key=lambda e: e.get('createdAtTimestamp', e.get('createdAt', '')),
@@ -119,7 +84,7 @@ def parse_authenticated_case_status(response_data: dict, case_number: str) -> Op
             if sorted_events:
                 latest_event = sorted_events[0]
                 event_code = latest_event.get('eventCode', '')
-                status = EVENT_CODE_MAP.get(event_code, f'Event: {event_code}')
+                status = f'Event: {event_code}' if event_code else 'Unknown event'
                 latest_event_date = latest_event.get('createdAt', '')
 
         # Check for notices (appointments, etc.)
@@ -154,47 +119,3 @@ def parse_authenticated_case_status(response_data: dict, case_number: str) -> Op
         return None
 
 
-def parse_similar_cases(cases: list[CaseStatus]) -> SimilarCasesSummary:
-    """Analyze a list of similar cases and return a summary."""
-    if not cases:
-        return SimilarCasesSummary(
-            base_case_number="",
-            total_checked=0,
-            status_counts={},
-            approved_count=0,
-            pending_count=0,
-            denied_count=0
-        )
-
-    status_counts = {}
-    approved_count = 0
-    pending_count = 0
-    denied_count = 0
-
-    # Keywords to identify status categories
-    approved_keywords = ['approved', 'card was produced', 'card was mailed',
-                         'card was picked up', 'card is being produced']
-    denied_keywords = ['denied', 'rejected', 'terminated']
-
-    for case in cases:
-        status_lower = case.status.lower()
-
-        # Count by exact status
-        status_counts[case.status] = status_counts.get(case.status, 0) + 1
-
-        # Categorize
-        if any(kw in status_lower for kw in approved_keywords):
-            approved_count += 1
-        elif any(kw in status_lower for kw in denied_keywords):
-            denied_count += 1
-        else:
-            pending_count += 1
-
-    return SimilarCasesSummary(
-        base_case_number=cases[0].case_number if cases else "",
-        total_checked=len(cases),
-        status_counts=status_counts,
-        approved_count=approved_count,
-        pending_count=pending_count,
-        denied_count=denied_count
-    )
