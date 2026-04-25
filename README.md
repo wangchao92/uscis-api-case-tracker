@@ -44,8 +44,8 @@ Automatically monitors your USCIS case status by reading the JSON response from 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/CaseTracker.git
-cd CaseTracker
+git clone https://github.com/wangchao92/uscis-api-case-tracker.git
+cd uscis-api-case-tracker
 ```
 
 ### 2. Install dependencies
@@ -167,3 +167,11 @@ The auto-login couldn't complete. Open the browser window for that account, log 
 
 **500 errors in the log**  
 Usually means the session expired mid-check. The tracker will automatically retry with a fresh login on the next cycle.
+
+## Disclaimer
+
+This is an unofficial tool and is not affiliated with, endorsed by, or sponsored by USCIS or the U.S. government. It uses the same public API that the USCIS website itself calls. Use at your own risk — be respectful of the service (the default 1-hour check interval is intentionally conservative; don't lower it aggressively). The author assumes no responsibility for any consequences of use, including missed notifications or account issues.
+
+## License
+
+[MIT](LICENSE)
