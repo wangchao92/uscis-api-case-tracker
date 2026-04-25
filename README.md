@@ -77,6 +77,8 @@ email:
   recipient_email: "you@gmail.com"         # Where to send notifications
 ```
 
+> **Important:** Both the `accounts` block AND the `email` block must be filled in. The `email` block controls where status-change notifications are sent — leaving it empty or with placeholder values will cause an SMTP authentication error. The same Gmail App Password works for both `verification_app_password` (fetching 2FA codes via IMAP) and `sender_password` (sending notifications via SMTP).
+
 **Security note:** `config.yaml` is excluded from git and will never be committed.
 
 ### 4. Start the browser
