@@ -16,7 +16,7 @@ Automatically monitors your USCIS case status by reading the JSON response from 
 
 ## Example notification
 
-![Status change email notification](screenshots/email-notification.png)
+<img src="screenshots/email-notification.png" alt="Status change email notification" width="500">
 
 ## Prerequisites
 
