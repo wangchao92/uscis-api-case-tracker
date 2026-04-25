@@ -1,0 +1,38 @@
+uscis:
+  check_interval_hours: 1
+  accounts:
+    - name: "Account 1"
+      browser_port: 9222
+      browser_profile_path: "./browser-profile-uscis1"
+      username: "your_uscis_email@gmail.com"
+      password: "your_uscis_password"
+      verification_email: "your_gmail@gmail.com"
+      verification_app_password: "xxxx xxxx xxxx xxxx"
+      cases:
+        - case_number: "IOE0000000000"
+          case_type: "I-485"
+          track_similar: false
+
+    # Add a second account below (optional):
+    # - name: "Account 2"
+    #   browser_port: 9223
+    #   browser_profile_path: "./browser-profile-uscis2"
+    #   username: "spouse_email@gmail.com"
+    #   password: "spouse_uscis_password"
+    #   verification_email: "spouse_email@gmail.com"
+    #   verification_app_password: "xxxx xxxx xxxx xxxx"
+    #   cases:
+    #     - case_number: "IOE0000000001"
+    #       case_type: "I-485"
+    #       track_similar: false
+
+email:
+  smtp_server: "smtp.gmail.com"
+  smtp_port: 587
+  sender_email: "your_gmail@gmail.com"
+  sender_password: "xxxx xxxx xxxx xxxx"
+  recipient_email: "your_gmail@gmail.com"
+
+browser:
+  type: "chromium"
+  profile_path: ""
